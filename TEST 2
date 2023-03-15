@@ -1,0 +1,27 @@
+-- Load data into a table
+CREATE TABLE security_log (
+    instance_id INT,
+    incident_id INT,
+    timestamp TIMESTAMP
+);
+
+LOAD DATA INFILE 'security_log.csv'
+INTO TABLE security_log
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+-- Drop any rows where incident_id is null
+DELETE FROM security_log WHERE incident_id IS NULL;
+
+-- Convert timestamp from UTC to IST
+UPDATE security_log SET timestamp = CONVERT_TZ(timestamp, '+00:00', '+05:30');
+
+-- Extract date and time information
+SELECT
+    DATE(timestamp) AS date,
+    HOUR(timestamp) AS hour,
+    COUNT(*) AS incidents_with_id,
+    COUNT(*) / COUNT(incident_id) AS percent_with_id
+FROM security_log
+GROUP BY DATE(timestamp), HOUR(timestamp);
